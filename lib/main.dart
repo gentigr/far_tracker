@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+import './screens/features_overview.dart';
+
+void main() => runApp(const Aviators());
+
+class Aviators extends StatelessWidget {
+  const Aviators({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Aviators',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: FeaturesOverview(),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
