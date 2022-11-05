@@ -13,22 +13,25 @@ class FeatureItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridTile(
-      footer: GridTileBar(
-        backgroundColor: Colors.black54,
-        title: Text(
-          description,
-          textAlign: TextAlign.center,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: GridTile(
+        footer: GridTileBar(
+          backgroundColor: Colors.black54,
+          title: Text(
+            description,
+            textAlign: TextAlign.center,
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () {},
+          ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.favorite),
-          onPressed: () {},
-        ),
-      ),
-      child: Center(
-        child: Text(
-          title,
-          textAlign: TextAlign.center,
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
