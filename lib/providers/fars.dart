@@ -7,17 +7,17 @@ class Fars with ChangeNotifier {
     Far(
       id: 'FAR-1',
       date: '2022-11-05',
-      content: 'The content of the Federal Aviation Regulations',
+      content: 'The content of the Federal Aviation Regulations (v.1)',
     ),
     Far(
-      id: 'FAR-1',
-      date: '2022-11-05',
-      content: 'The content of the Federal Aviation Regulations',
+      id: 'FAR-2',
+      date: '2022-11-06',
+      content: 'The content of the Federal Aviation Regulations (v.2)',
     ),
     Far(
-      id: 'FAR-1',
-      date: '2022-11-05',
-      content: 'The content of the Federal Aviation Regulations',
+      id: 'FAR-3',
+      date: '2022-11-07',
+      content: 'The content of the Federal Aviation Regulations (v.3)',
     ),
   ];
 

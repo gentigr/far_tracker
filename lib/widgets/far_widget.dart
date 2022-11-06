@@ -17,7 +17,7 @@ class FarWidget extends StatelessWidget {
       child: GridTile(
         child: GestureDetector(
           onTap: () {
-            Navigator.of(context).pushNamed(FarScreen.routeName);
+            Navigator.of(context).pushNamed(FarScreen.routeName, arguments: id);
           },
           child: Center(
             child: Text(
