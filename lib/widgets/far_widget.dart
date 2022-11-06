@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/fars_screen.dart';
+import '../screens/far_screen.dart';
 
 class FarWidget extends StatelessWidget {
   final String id;
@@ -17,7 +17,7 @@ class FarWidget extends StatelessWidget {
       child: GridTile(
         child: GestureDetector(
           onTap: () {
-            // TODO: open FAR
+            Navigator.of(context).pushNamed(FarScreen.routeName);
           },
           child: Center(
             child: Text(

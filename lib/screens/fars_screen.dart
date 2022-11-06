@@ -5,7 +5,7 @@ import '../providers/fars.dart';
 import '../widgets/far_widget.dart';
 
 class FarsScreen extends StatelessWidget {
-  static const routeName = '/far-collection';
+  static const routeName = '/fars';
 
   @override
   Widget build(BuildContext context) {
