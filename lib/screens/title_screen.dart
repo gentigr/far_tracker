@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/fars.dart';
-import '../widgets/far_widget.dart';
 
-class FarScreen extends StatelessWidget {
-  static const routeName = '/fars/far';
+class TitleScreen extends StatelessWidget {
+  static const routeName = '/fars/title';
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import './providers/fars.dart';
 
-import './screens/far_screen.dart';
+import './screens/title_screen.dart';
 import './screens/fars_screen.dart';
 import './screens/features_screen.dart';
 
@@ -24,8 +24,8 @@ class Aviators extends StatelessWidget {
           ),
           home: FeaturesScreen(),
           routes: {
-            FarScreen.routeName: (ctx) => FarScreen(),
             FarsScreen.routeName: (ctx) => FarsScreen(),
+            TitleScreen.routeName: (ctx) => TitleScreen(),
           }),
     );
   }
