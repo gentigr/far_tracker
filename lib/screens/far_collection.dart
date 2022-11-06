@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/fars.dart';
-import '../widgets/far_item.dart';
+import '../widgets/far_widget.dart';
 
 class FarCollection extends StatelessWidget {
 
@@ -21,7 +21,7 @@ class FarCollection extends StatelessWidget {
       body: ListView.builder(
         padding: const EdgeInsets.all(10.0),
         itemCount: fars.length,
-        itemBuilder: (ctx, i) => FarItem(
+        itemBuilder: (ctx, i) => FarWidget(
             id: fars[i].id,
             date: fars[i].date,
             content: fars[i].content),

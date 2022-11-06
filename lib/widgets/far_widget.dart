@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../screens/far_collection.dart';
 
-class FarItem extends StatelessWidget {
+class FarWidget extends StatelessWidget {
   final String id;
   final String date;
   final String content;
 
-  const FarItem(
-      {super.key,
-        required this.id,
-        required this.date,
-        required this.content});
+  const FarWidget(
+      {super.key, required this.id, required this.date, required this.content});
 
   @override
   Widget build(BuildContext context) {
