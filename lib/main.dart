@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import './providers/fars.dart';
 
 import './screens/far_collection.dart';
 import './screens/features_overview.dart';
@@ -11,15 +14,17 @@ class Aviators extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Aviators',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: FeaturesOverview(),
-      routes: {
-        FarCollection.routeName: (ctx) => FarCollection(),
-      }
+    return ChangeNotifierProvider(
+      create: (ctx) => Fars(),
+      child: MaterialApp(
+          title: 'Aviators',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: FeaturesOverview(),
+          routes: {
+            FarCollection.routeName: (ctx) => FarCollection(),
+          }),
     );
   }
 }
