@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/feature.dart';
 import '../widgets/feature_widget.dart';
 
-class FeaturesOverview extends StatelessWidget {
+class FeaturesScreen extends StatelessWidget {
   final List<Feature> loadedFeatures = [
     Feature(
       id: 'far',

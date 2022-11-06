@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import './providers/fars.dart';
 
 import './screens/fars_screen.dart';
-import './screens/features_overview.dart';
+import './screens/features_screen.dart';
 
 void main() => runApp(const Aviators());
 
@@ -21,7 +21,7 @@ class Aviators extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: FeaturesOverview(),
+          home: FeaturesScreen(),
           routes: {
             FarsScreen.routeName: (ctx) => FarsScreen(),
           }),
