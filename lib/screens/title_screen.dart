@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/fars.dart';
+import '../widgets/title_widget.dart';
 
 class TitleScreen extends StatelessWidget {
   static const routeName = '/fars/title';
@@ -18,7 +19,7 @@ class TitleScreen extends StatelessWidget {
           child: Text('Federal Aviation Regulations'),
         ),
       ),
-      body: Text(far.content),
+      body: TitleWidget(id: id),
     );
   }
 }
