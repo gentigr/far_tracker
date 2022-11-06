@@ -17,11 +17,17 @@ class FarsScreen extends StatelessWidget {
           child: Text('Federal Aviation Regulations'),
         ),
       ),
-      body: ListView.builder(
+      body: GridView.builder(
         padding: const EdgeInsets.all(10.0),
         itemCount: fars.length,
         itemBuilder: (ctx, i) => FarWidget(
             id: fars[i].id, date: fars[i].date, content: fars[i].content),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 1,
+          childAspectRatio: 10,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
       ),
     );
   }
