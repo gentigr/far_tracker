@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../screens/far_collection.dart';
+
 class FeatureItem extends StatelessWidget {
   final String id;
   final String title;
@@ -27,10 +29,15 @@ class FeatureItem extends StatelessWidget {
             onPressed: () {},
           ),
         ),
-        child: Center(
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(context).pushNamed(FarCollection.routeName);
+          },
+          child: Center(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),

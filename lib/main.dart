@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import './screens/far_collection.dart';
 import './screens/features_overview.dart';
 
 void main() => runApp(const Aviators());
@@ -16,6 +17,9 @@ class Aviators extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: FeaturesOverview(),
+      routes: {
+        FarCollection.routeName: (ctx) => FarCollection(),
+      }
     );
   }
 }
