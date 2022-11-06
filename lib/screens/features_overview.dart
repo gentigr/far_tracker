@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/feature.dart';
-import '../widgets/feature_item.dart';
+import '../widgets/feature_widget.dart';
 
 class FeaturesOverview extends StatelessWidget {
   final List<Feature> loadedFeatures = [
@@ -38,7 +38,7 @@ class FeaturesOverview extends StatelessWidget {
         body: GridView.builder(
           padding: const EdgeInsets.all(10.0),
           itemCount: loadedFeatures.length,
-          itemBuilder: (ctx, i) => FeatureItem(
+          itemBuilder: (ctx, i) => FeatureWidget(
               id: loadedFeatures[i].id,
               title: loadedFeatures[i].title,
               description: loadedFeatures[i].description),

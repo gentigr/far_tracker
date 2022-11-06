@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../screens/far_collection.dart';
 
-class FeatureItem extends StatelessWidget {
+class FeatureWidget extends StatelessWidget {
   final String id;
   final String title;
   final String description;
 
-  const FeatureItem(
+  const FeatureWidget(
       {super.key,
       required this.id,
       required this.title,
