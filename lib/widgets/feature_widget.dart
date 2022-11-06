@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/far_collection.dart';
+import '../screens/fars_screen.dart';
 
 class FeatureWidget extends StatelessWidget {
   final String id;
@@ -31,7 +31,7 @@ class FeatureWidget extends StatelessWidget {
         ),
         child: GestureDetector(
           onTap: () {
-            Navigator.of(context).pushNamed(FarCollection.routeName);
+            Navigator.of(context).pushNamed(FarsScreen.routeName);
           },
           child: Center(
             child: Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/far_collection.dart';
+import '../screens/fars_screen.dart';
 
 class FarWidget extends StatelessWidget {
   final String id;
