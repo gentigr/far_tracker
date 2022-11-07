@@ -37,6 +37,11 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
 
+  code_of_federal_regulations:
+    git:
+      url: https://github.com/gentigr/code_of_federal_regulations.git
+      ref: main
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
