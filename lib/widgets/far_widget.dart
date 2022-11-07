@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/title_screen.dart';
+import '../screens/chapters_screen.dart';
 
 class FarWidget extends StatelessWidget {
   final String id;
@@ -18,7 +18,7 @@ class FarWidget extends StatelessWidget {
         child: GestureDetector(
           onTap: () {
             Navigator.of(context)
-                .pushNamed(TitleScreen.routeName, arguments: id);
+                .pushNamed(ChaptersScreen.routeName, arguments: id);
           },
           child: Center(
             child: Text(

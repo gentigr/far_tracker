@@ -2,9 +2,9 @@ import 'package:code_of_federal_regulations/code_of_federal_regulations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-class TitleWidget extends StatelessWidget {
+class ChapterWidget extends StatelessWidget {
   final String id;
-  const TitleWidget({super.key, required this.id});
+  const ChapterWidget({super.key, required this.id});
 
   Future<String> _loadFarContent(String id) async {
     String cfrContent =

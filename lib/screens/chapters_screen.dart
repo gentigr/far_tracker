@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/fars.dart';
-import '../widgets/title_widget.dart';
+import '../widgets/chapter_widget.dart';
 
-class TitleScreen extends StatelessWidget {
-  static const routeName = '/fars/title';
+class ChaptersScreen extends StatelessWidget {
+  static const routeName = '/fars/chapters';
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class TitleScreen extends StatelessWidget {
           child: Text('Federal Aviation Regulations'),
         ),
       ),
-      body: TitleWidget(id: id),
+      body: ChapterWidget(id: id),
     );
   }
 }
