@@ -6,6 +6,7 @@ import './providers/fars.dart';
 import './screens/chapters_screen.dart';
 import './screens/fars_screen.dart';
 import './screens/features_screen.dart';
+import './screens/subchapters_screen.dart';
 
 void main() => runApp(const Aviators());
 
@@ -26,6 +27,7 @@ class Aviators extends StatelessWidget {
           routes: {
             FarsScreen.routeName: (ctx) => FarsScreen(),
             ChaptersScreen.routeName: (ctx) => ChaptersScreen(),
+            SubChaptersScreen.routeName: (ctx) => SubChaptersScreen(),
           }),
     );
   }
