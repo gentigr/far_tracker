@@ -10,21 +10,6 @@ class FeaturesScreen extends StatelessWidget {
       title: 'FAR',
       description: 'The Federal Aviation Regulations',
     ),
-    Feature(
-      id: 'far',
-      title: 'FAR',
-      description: 'The Federal Aviation Regulations',
-    ),
-    Feature(
-      id: 'far',
-      title: 'FAR',
-      description: 'The Federal Aviation Regulations',
-    ),
-    Feature(
-      id: 'far',
-      title: 'FAR',
-      description: 'The Federal Aviation Regulations',
-    ),
   ];
 
   @override
