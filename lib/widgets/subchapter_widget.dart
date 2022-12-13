@@ -8,12 +8,17 @@ class SubChapterWidget extends StatelessWidget {
   final RegulationUnit unit;
   const SubChapterWidget({super.key, required this.unit});
 
-  String _getText(RegulationUnit unit) {
+  Text _getTextWidget(RegulationUnit unit) {
+    String content = unit.title;
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
-      return '${unit.title}\n${unit.element}';
+      content = '${unit.title}\n${unit.element}';
     }
-    return unit.title;
+    return Text(
+        content,
+        textAlign: TextAlign.left,
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -27,10 +32,7 @@ class SubChapterWidget extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-            child: Text(
-              _getText(unit),
-              textAlign: TextAlign.left,
-            ),
+            child: _getTextWidget(unit),
           ),
         ),
       ),
