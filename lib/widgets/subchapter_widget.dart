@@ -1,21 +1,57 @@
 import 'package:code_of_federal_regulations/code_of_federal_regulations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import '../screens/subchapters_screen.dart';
-
+import 'package:xml/xml.dart';
 
 class SubChapterWidget extends StatelessWidget {
   final RegulationUnit unit;
   const SubChapterWidget({super.key, required this.unit});
 
-  Text _getTextWidget(RegulationUnit unit) {
-    String content = unit.title;
-    if (['SECTION', 'APPENDIX'].contains(unit.type)) {
-      content = '${unit.title}\n${unit.element}';
+  TextSpan _formatLeaf(BuildContext context, String text, XmlName name) {
+    TextStyle style = DefaultTextStyle.of(context).style;
+    switch(name.toString()) {
+      case 'I':
+        style = TextStyle(
+          fontStyle: FontStyle.italic,
+          backgroundColor: Colors.black.withOpacity(0.2),
+        );
+        break;
+      default:
+        break;
     }
-    return Text(
-        content,
-        textAlign: TextAlign.left,
+
+    return TextSpan(
+      text: text,
+      style: style,
+    );
+  }
+
+  List<TextSpan> _processNodeList(BuildContext context, List<XmlNode> nodes) {
+    List<TextSpan> ts = [];
+    for(var node in nodes) {
+      if (node.children.isEmpty) {
+        ts.add(TextSpan(text: '{${node.parentElement!.name.toString()}}'));
+        ts.add(
+          _formatLeaf(context, node.text, node.parentElement!.name)
+        );
+      } else {
+        ts.addAll(_processNodeList(context, node.children));
+      }
+    }
+    return ts;
+  }
+
+  RichText _getRichTextWidget(BuildContext context, RegulationUnit unit) {
+    List<TextSpan> ts = [];
+    if (['SECTION', 'APPENDIX'].contains(unit.type)) {
+      ts.addAll(_processNodeList(context, unit.element.children));
+    }
+    return RichText(
+      text: TextSpan(
+        text: '${unit.title}\n\n',
+        style: DefaultTextStyle.of(context).style,
+        children: ts,
+      ),
     );
   }
 
@@ -32,7 +68,7 @@ class SubChapterWidget extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-            child: _getTextWidget(unit),
+            child: _getRichTextWidget(context, unit),
           ),
         ),
       ),
