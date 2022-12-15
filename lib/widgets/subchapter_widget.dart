@@ -3,6 +3,31 @@ import 'package:flutter/material.dart';
 import '../screens/subchapters_screen.dart';
 import 'package:xml/xml.dart';
 
+class ContentProperty {
+  bool isItalic;
+
+  ContentProperty([this.isItalic = false]);
+  ContentProperty.clone(ContentProperty other): this(other.isItalic);
+}
+
+class Content {
+  final String data;
+  final ContentProperty cp;
+
+  const Content({required this.data, required this.cp});
+}
+
+class ParagraphProperty {
+
+}
+
+class Paragraph {
+  final List<Content> contents;
+  final ParagraphProperty pp;
+
+  const Paragraph({required this.contents, required this.pp});
+}
+
 class SubChapterWidget extends StatelessWidget {
   final RegulationUnit unit;
   const SubChapterWidget({super.key, required this.unit});
@@ -26,10 +51,27 @@ class SubChapterWidget extends StatelessWidget {
     );
   }
 
+  TextSpan _formatContent(BuildContext context, Content content) {
+    TextStyle style = DefaultTextStyle.of(context).style;
+    if (content.cp.isItalic) {
+      style = style.merge(TextStyle(
+        fontStyle: FontStyle.italic,
+        backgroundColor: Colors.black.withOpacity(0.2),
+      ));
+    }
+
+    return TextSpan(
+      text: content.data,
+      style: style,
+    );
+  }
+
   List<TextSpan> _processNodeList(BuildContext context, List<XmlNode> nodes) {
     List<TextSpan> ts = [];
     for(var node in nodes) {
       if (node.children.isEmpty) {
+        ts.add(TextSpan(text: 'elements|${node.childElements.toString()}|\n'));
+        ts.add(TextSpan(text: 'nodes|${node.children.toString()}|\n'));
         ts.add(TextSpan(text: '{${node.parentElement!.name.toString()}}'));
         ts.add(
           _formatLeaf(context, node.text, node.parentElement!.name)
@@ -41,10 +83,50 @@ class SubChapterWidget extends StatelessWidget {
     return ts;
   }
 
+  ContentProperty _buildContentProperty(String parentTag, ContentProperty cp) {
+    ContentProperty properties = ContentProperty.clone(cp);
+    if (parentTag == 'I') {
+      properties.isItalic = true;
+    }
+    return properties;
+  }
+
+  List<Content> _processChildren(List<XmlNode> nodes, ContentProperty cp) {
+    List<Content> contents = [];
+    // TODO: re-evaluate, should be safe since it is executed only for
+    // paragraphs and for nodes that have at least text children, but still
+    // not a good idea to rely on these constraints
+    String parentTag = nodes.first.parentElement!.name.toString();
+    ContentProperty mergedProperty = _buildContentProperty(parentTag, cp);
+    for (var node in nodes) {
+      if (node.nodeType == XmlNodeType.TEXT) {
+        // leaf node, there is no more inner XML tags
+        contents.add(Content(data: node.text, cp: mergedProperty));
+      } else {
+        contents.addAll(_processChildren(node.children, mergedProperty));
+      }
+    }
+    return contents;
+  }
+
+  List<Content> _process(Iterable<XmlElement> elements) {
+    ContentProperty cp = ContentProperty();
+    List<Content> contents = [];
+    for(var element in elements.where((element) => element.name.toString() == 'P')) {
+      contents.addAll(_processChildren(element.children, cp));
+    }
+    return contents;
+  }
+
+  Iterable<TextSpan> _format(BuildContext context, List<Content> contents) {
+    return contents.map((content) => _formatContent(context, content));
+  }
+
   RichText _getRichTextWidget(BuildContext context, RegulationUnit unit) {
     List<TextSpan> ts = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
-      ts.addAll(_processNodeList(context, unit.element.children));
+      // ts.addAll(_processNodeList(context, unit.element.children));
+      ts.addAll(_format(context, _process(unit.element.childElements)));
     }
     return RichText(
       text: TextSpan(
