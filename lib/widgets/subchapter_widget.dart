@@ -126,19 +126,21 @@ class SubChapterWidget extends StatelessWidget {
     return ts;
   }
 
-  RichText _getRichTextWidget(BuildContext context, RegulationUnit unit) {
-    List<TextSpan> ts = [];
+  List<RichText> _getRichTextWidget(BuildContext context, RegulationUnit unit) {
+    List<RichText> rt = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
       // ts.addAll(_processNodeList(context, unit.element.children));
-      ts.addAll(_format(context, _process(unit.element.childElements)));
+      for (var paragraph in _process(unit.element.childElements)) {
+        List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
+        rt.add(RichText(
+          text: TextSpan(
+            children: ts,
+          ),
+        )
+        );
+      }
     }
-    return RichText(
-      text: TextSpan(
-        text: '${unit.title}\n\n',
-        style: DefaultTextStyle.of(context).style,
-        children: ts,
-      ),
-    );
+    return rt;
   }
 
   @override
@@ -154,7 +156,16 @@ class SubChapterWidget extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-            child: _getRichTextWidget(context, unit),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [RichText(
+                text: TextSpan(
+                  text: '${unit.title}\n\n',
+                  style: DefaultTextStyle.of(context).style,
+                ),
+              )] + _getRichTextWidget(context, unit),
+            ),
           ),
         ),
       ),
