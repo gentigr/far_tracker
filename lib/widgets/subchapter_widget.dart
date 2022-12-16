@@ -18,7 +18,8 @@ class Content {
 }
 
 class ParagraphProperty {
-
+  int indent;
+  ParagraphProperty([this.indent = 0]);
 }
 
 class Paragraph {
@@ -113,7 +114,8 @@ class SubChapterWidget extends StatelessWidget {
     ContentProperty cp = ContentProperty();
     List<Paragraph> paragraphs = [];
     for(var element in elements.where((element) => element.name.toString() == 'P')) {
-      paragraphs.add(Paragraph(contents: _processChildren(element.children, cp), pp: ParagraphProperty()));
+      var content = _processChildren(element.children, cp);
+      paragraphs.add(Paragraph(contents: content, pp: ParagraphProperty()));
     }
     return paragraphs;
   }
