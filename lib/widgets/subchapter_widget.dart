@@ -109,17 +109,21 @@ class SubChapterWidget extends StatelessWidget {
     return contents;
   }
 
-  List<Content> _process(Iterable<XmlElement> elements) {
+  List<Paragraph> _process(Iterable<XmlElement> elements) {
     ContentProperty cp = ContentProperty();
-    List<Content> contents = [];
+    List<Paragraph> paragraphs = [];
     for(var element in elements.where((element) => element.name.toString() == 'P')) {
-      contents.addAll(_processChildren(element.children, cp));
+      paragraphs.add(Paragraph(contents: _processChildren(element.children, cp), pp: ParagraphProperty()));
     }
-    return contents;
+    return paragraphs;
   }
 
-  Iterable<TextSpan> _format(BuildContext context, List<Content> contents) {
-    return contents.map((content) => _formatContent(context, content));
+  Iterable<TextSpan> _format(BuildContext context, List<Paragraph> paragraphs) {
+    List<TextSpan> ts = [];
+    for (var paragraph in paragraphs) {
+      ts.addAll(paragraph.contents.map((content) => _formatContent(context, content)));
+    }
+    return ts;
   }
 
   RichText _getRichTextWidget(BuildContext context, RegulationUnit unit) {
