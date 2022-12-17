@@ -166,10 +166,10 @@ class SubChapterWidget extends StatelessWidget {
         indexDescriptors.add(IndexDescriptor(indexValue: currentIndexValue, isItalic: currentIsItalic, paragraph: parentParagraph));
         newParagraph.isItalic = currentIsItalic;
         newParagraph.indexValue = currentIndexValue;
-        newParagraph.isSubparagraph = true;
       }
 
       if (parentParagraph != null) {
+        newParagraph.isSubparagraph = true;
         parentParagraph.subparagraphs.add(newParagraph);
       } else {
         paragraphs.add(newParagraph);
