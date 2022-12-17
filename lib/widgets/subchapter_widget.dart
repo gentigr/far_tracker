@@ -133,7 +133,7 @@ class SubChapterWidget extends StatelessWidget {
       String format = r'^\((?<standard>\w+)\)|^\(<I>(?<italic>\w+)<\/I>\)';
       RegExp exp = RegExp(format);
       Iterable<RegExpMatch> matches = exp.allMatches(element.text);
-      Paragraph? parentParagraph;
+      Paragraph? parentParagraph = paragraphs.isNotEmpty ? paragraphs.last : null;
 
       var content = _processChildren(element.children, cp);
       var newParagraph = Paragraph(contents: content, pp: ParagraphProperty());
@@ -152,7 +152,6 @@ class SubChapterWidget extends StatelessWidget {
           }
         }
         if (actualIndexDescriptor == null) {
-          parentParagraph = paragraphs.isNotEmpty ? paragraphs.last : null;
           if (parentParagraph == null) {
             // case when there is no paragraph before list starts
             Paragraph emptyParagraph = Paragraph(contents: <Content>[], pp: ParagraphProperty());
