@@ -25,6 +25,8 @@ class ParagraphProperty {
 class Paragraph {
   final List<Content> contents;
   final ParagraphProperty pp;
+  String indexValue = '';
+  bool isItalic = false;
   List<Paragraph> subparagraphs = <Paragraph>[];
 
   Paragraph({required this.contents, required this.pp});
@@ -132,6 +134,10 @@ class SubChapterWidget extends StatelessWidget {
       RegExp exp = RegExp(format);
       Iterable<RegExpMatch> matches = exp.allMatches(element.text);
       Paragraph? parentParagraph;
+
+      var content = _processChildren(element.children, cp);
+      var newParagraph = Paragraph(contents: content, pp: ParagraphProperty());
+
       if (matches.isNotEmpty) {
         bool currentIsItalic = matches.elementAt(0).namedGroup('italic') != null;
         String currentIndexValue = matches.elementAt(0).namedGroup(currentIsItalic ? 'italic' : 'standard')!;
@@ -158,10 +164,10 @@ class SubChapterWidget extends StatelessWidget {
         }
 
         indexDescriptors.add(IndexDescriptor(indexValue: currentIndexValue, isItalic: currentIsItalic, paragraph: parentParagraph));
+        newParagraph.isItalic = currentIsItalic;
+        newParagraph.indexValue = currentIndexValue;
       }
 
-      var content = _processChildren(element.children, cp);
-      var newParagraph = Paragraph(contents: content, pp: ParagraphProperty());
       if (parentParagraph != null) {
         parentParagraph.subparagraphs.add(newParagraph);
       } else {
