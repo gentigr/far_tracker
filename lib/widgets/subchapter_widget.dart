@@ -186,18 +186,38 @@ class SubChapterWidget extends StatelessWidget {
   }
 
   List<Row> _generateRichTexts(BuildContext context, Paragraph paragraph) {
+    bool isSubparagraph = paragraph.indexValue.isNotEmpty;
+
     List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
-    Row header = Row(
-      children: [Expanded(
-        child:
-            RichText(
-            text: TextSpan(
-              children: ts,
-            ),
-          ),
-        ),
-      ],
+    var headerText = RichText(
+      text: TextSpan(
+        children: ts,
+      ),
     );
+
+    Row header;
+    if (!isSubparagraph) {
+      header = Row(
+        children: [
+          Expanded(
+              child: headerText
+          ),
+        ],
+      );
+    } else {
+      header = Row(
+        children: [
+          Expanded(
+              flex: 1,
+              child: RichText(text: TextSpan(text: paragraph.indexValue)),
+          ),
+          Expanded(
+              flex: 9,
+              child: headerText
+          ),
+        ],
+      );
+    }
 
     List<Row> rt = [header];
     for(var subparagraph in paragraph.subparagraphs) {
