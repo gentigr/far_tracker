@@ -209,7 +209,7 @@ class SubChapterWidget extends StatelessWidget {
       var index = RichText(
         textAlign: TextAlign.right,
         text: TextSpan(
-            text: "(${paragraph.indexValue})",
+            text: paragraph.indexValue.isNotEmpty ? "(${paragraph.indexValue})" : "",
             style: DefaultTextStyle.of(context).style
         )
       );
