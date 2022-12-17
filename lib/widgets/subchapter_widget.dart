@@ -114,6 +114,14 @@ class SubChapterWidget extends StatelessWidget {
     ContentProperty cp = ContentProperty();
     List<Paragraph> paragraphs = [];
     for(var element in elements.where((element) => element.name.toString() == 'P')) {
+      String format = r'^\((?<standard>\w+)\)|^\(<I>(?<italic>\w+)<\/I>\)';
+      RegExp exp = RegExp(format);
+      Iterable<RegExpMatch> matches = exp.allMatches(element.text);
+      for (final m in matches) {
+        print(m.namedGroup('standard'));
+      }
+      // print(element.text.toString());
+      // print(element.innerText.toString());
       var content = _processChildren(element.children, cp);
       paragraphs.add(Paragraph(contents: content, pp: ParagraphProperty()));
     }
