@@ -27,6 +27,7 @@ class Paragraph {
   final ParagraphProperty pp;
   String indexValue = '';
   bool isItalic = false;
+  bool isSubparagraph = false;
   List<Paragraph> subparagraphs = <Paragraph>[];
 
   Paragraph({required this.contents, required this.pp});
@@ -165,6 +166,7 @@ class SubChapterWidget extends StatelessWidget {
         indexDescriptors.add(IndexDescriptor(indexValue: currentIndexValue, isItalic: currentIsItalic, paragraph: parentParagraph));
         newParagraph.isItalic = currentIsItalic;
         newParagraph.indexValue = currentIndexValue;
+        newParagraph.isSubparagraph = true;
       }
 
       if (parentParagraph != null) {
@@ -185,7 +187,7 @@ class SubChapterWidget extends StatelessWidget {
   }
 
   List<Row> _generateRichTexts(BuildContext context, Paragraph paragraph) {
-    bool isSubparagraph = paragraph.indexValue.isNotEmpty;
+    bool isSubparagraph = paragraph.isSubparagraph;
 
     List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
     var headerText = RichText(
