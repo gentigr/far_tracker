@@ -206,11 +206,19 @@ class SubChapterWidget extends StatelessWidget {
         ],
       );
     } else {
+      var index = RichText(
+        textAlign: TextAlign.right,
+        text: TextSpan(
+            text: "(${paragraph.indexValue})",
+            style: DefaultTextStyle.of(context).style
+        )
+      );
       header = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
               flex: 1,
-              child: RichText(text: TextSpan(text: paragraph.indexValue)),
+              child: index,
           ),
           Expanded(
               flex: 9,
