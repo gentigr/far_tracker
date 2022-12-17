@@ -179,21 +179,29 @@ class SubChapterWidget extends StatelessWidget {
     return ts;
   }
 
-  List<RichText> _generateRichTexts(BuildContext context, Paragraph paragraph) {
+  List<Row> _generateRichTexts(BuildContext context, Paragraph paragraph) {
     List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
-    List<RichText> rt = [RichText(
-      text: TextSpan(
-        children: ts,
-      ),
-    )];
+    Row header = Row(
+      children: [Expanded(
+        child:
+            RichText(
+            text: TextSpan(
+              children: ts,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    List<Row> rt = [header];
     for(var subparagraph in paragraph.subparagraphs) {
       rt.addAll(_generateRichTexts(context, subparagraph));
     }
     return rt;
   }
 
-  List<RichText> _getRichTextWidget(BuildContext context, RegulationUnit unit) {
-    List<RichText> rt = [];
+  List<Row> _getRichTextWidget(BuildContext context, RegulationUnit unit) {
+    List<Row> rt = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
       // ts.addAll(_processNodeList(context, unit.element.children));
       for (var paragraph in _process(unit.element.childElements)) {
@@ -205,6 +213,21 @@ class SubChapterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Row> rows = [];
+    rows.add(
+      Row(
+        children: [
+          RichText(
+            text: TextSpan(
+              text: '${unit.title}\n\n',
+              style: DefaultTextStyle.of(context).style,
+            ),
+          )
+        ],
+      ),
+    );
+    rows.addAll(_getRichTextWidget(context, unit));
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(0),
       child: GridTile(
@@ -219,12 +242,7 @@ class SubChapterWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [RichText(
-                text: TextSpan(
-                  text: '${unit.title}\n\n',
-                  style: DefaultTextStyle.of(context).style,
-                ),
-              )] + _getRichTextWidget(context, unit),
+              children: rows,
             ),
           ),
         ),
