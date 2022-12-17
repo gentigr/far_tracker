@@ -25,8 +25,17 @@ class ParagraphProperty {
 class Paragraph {
   final List<Content> contents;
   final ParagraphProperty pp;
+  List<Paragraph> subparagraphs = <Paragraph>[];
 
-  const Paragraph({required this.contents, required this.pp});
+  Paragraph({required this.contents, required this.pp});
+}
+
+class IndexDescriptor {
+  final String indexValue;
+  final bool isItalic;
+  final Paragraph paragraph;
+
+  const IndexDescriptor({required this.indexValue, required this.isItalic, required this.paragraph});
 }
 
 class SubChapterWidget extends StatelessWidget {
@@ -110,20 +119,54 @@ class SubChapterWidget extends StatelessWidget {
     return contents;
   }
 
+  String _nextIndexValue(String indexValue) {
+    return String.fromCharCode(indexValue.codeUnitAt(0));
+  }
+
   List<Paragraph> _process(Iterable<XmlElement> elements) {
     ContentProperty cp = ContentProperty();
     List<Paragraph> paragraphs = [];
+    List<IndexDescriptor> indexDescriptors = [];
     for(var element in elements.where((element) => element.name.toString() == 'P')) {
       String format = r'^\((?<standard>\w+)\)|^\(<I>(?<italic>\w+)<\/I>\)';
       RegExp exp = RegExp(format);
       Iterable<RegExpMatch> matches = exp.allMatches(element.text);
-      for (final m in matches) {
-        print(m.namedGroup('standard'));
+      Paragraph? parentParagraph;
+      if (matches.isNotEmpty) {
+        bool currentIsItalic = matches.elementAt(0).namedGroup('italic') != null;
+        String currentIndexValue = matches.elementAt(0).namedGroup(currentIsItalic ? 'italic' : 'standard')!;
+
+        IndexDescriptor? actualIndexDescriptor;
+        while(indexDescriptors.isNotEmpty) {
+          var id = indexDescriptors.removeLast();
+          if(_nextIndexValue(id.indexValue) == currentIndexValue
+              && id.isItalic == currentIsItalic) {
+            actualIndexDescriptor = id;
+            break;
+          }
+        }
+        if (actualIndexDescriptor == null) {
+          parentParagraph = paragraphs.isNotEmpty ? paragraphs.last : null;
+          if (parentParagraph == null) {
+            // case when there is no paragraph before list starts
+            Paragraph emptyParagraph = Paragraph(contents: <Content>[], pp: ParagraphProperty());
+            paragraphs.add(emptyParagraph);
+            parentParagraph = emptyParagraph;
+          }
+        } else {
+          parentParagraph = actualIndexDescriptor.paragraph;
+        }
+
+        indexDescriptors.add(IndexDescriptor(indexValue: currentIndexValue, isItalic: currentIsItalic, paragraph: parentParagraph));
       }
-      // print(element.text.toString());
-      // print(element.innerText.toString());
+
       var content = _processChildren(element.children, cp);
-      paragraphs.add(Paragraph(contents: content, pp: ParagraphProperty()));
+      var newParagraph = Paragraph(contents: content, pp: ParagraphProperty());
+      if (parentParagraph != null) {
+        parentParagraph.subparagraphs.add(newParagraph);
+      } else {
+        paragraphs.add(newParagraph);
+      }
     }
     return paragraphs;
   }
@@ -136,18 +179,25 @@ class SubChapterWidget extends StatelessWidget {
     return ts;
   }
 
+  List<RichText> _generateRichTexts(BuildContext context, Paragraph paragraph) {
+    List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
+    List<RichText> rt = [RichText(
+      text: TextSpan(
+        children: ts,
+      ),
+    )];
+    for(var subparagraph in paragraph.subparagraphs) {
+      rt.addAll(_generateRichTexts(context, subparagraph));
+    }
+    return rt;
+  }
+
   List<RichText> _getRichTextWidget(BuildContext context, RegulationUnit unit) {
     List<RichText> rt = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
       // ts.addAll(_processNodeList(context, unit.element.children));
       for (var paragraph in _process(unit.element.childElements)) {
-        List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
-        rt.add(RichText(
-          text: TextSpan(
-            children: ts,
-          ),
-        )
-        );
+        rt.addAll(_generateRichTexts(context, paragraph));
       }
     }
     return rt;
