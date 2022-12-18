@@ -123,7 +123,7 @@ class SubChapterWidget extends StatelessWidget {
   }
 
   String _nextIndexValue(String indexValue) {
-    return String.fromCharCode(indexValue.codeUnitAt(0));
+    return String.fromCharCode(indexValue.codeUnitAt(0) + 1);
   }
 
   List<Paragraph> _process(Iterable<XmlElement> elements) {
@@ -144,20 +144,28 @@ class SubChapterWidget extends StatelessWidget {
         String currentIndexValue = matches.elementAt(0).namedGroup(currentIsItalic ? 'italic' : 'standard')!;
 
         IndexDescriptor? actualIndexDescriptor;
-        while(indexDescriptors.isNotEmpty) {
-          var id = indexDescriptors.removeLast();
+        // while(indexDescriptors.isNotEmpty) {
+        for(int i = indexDescriptors.length - 1; i >= 0; --i) {
+          var id = indexDescriptors[i]; //.removeLast();
           if(_nextIndexValue(id.indexValue) == currentIndexValue
               && id.isItalic == currentIsItalic) {
             actualIndexDescriptor = id;
+            indexDescriptors.removeRange(i, indexDescriptors.length);
             break;
           }
         }
+        // if (actualIndexDescriptor == null) {
+        //   indexDescriptors.clear();
+        // }
+
         if (actualIndexDescriptor == null) {
           if (parentParagraph == null) {
             // case when there is no paragraph before list starts
             Paragraph emptyParagraph = Paragraph(contents: <Content>[], pp: ParagraphProperty());
             paragraphs.add(emptyParagraph);
             parentParagraph = emptyParagraph;
+          } else {
+            parentParagraph = parentParagraph.subparagraphs.last;
           }
         } else {
           parentParagraph = actualIndexDescriptor.paragraph;
@@ -186,61 +194,88 @@ class SubChapterWidget extends StatelessWidget {
     return ts;
   }
 
-  List<Row> _generateRichTexts(BuildContext context, Paragraph paragraph) {
-    bool isSubparagraph = paragraph.isSubparagraph;
-
-    List<TextSpan> ts = paragraph.contents.map((content) => _formatContent(context, content)).toList();
+  Row _constructHeaderRow(BuildContext context, List<Content> contents) {
+    List<TextSpan> ts = contents.map((content) => _formatContent(context, content)).toList();
     var headerText = RichText(
       text: TextSpan(
         children: ts,
       ),
     );
+    return Row(
+      children: [
+        Expanded(
+            child: headerText
+        ),
+      ],
+    );
+  }
 
-    Row header;
-    if (!isSubparagraph) {
-      header = Row(
-        children: [
-          Expanded(
-              child: headerText
-          ),
-        ],
-      );
-    } else {
-      var index = RichText(
-        textAlign: TextAlign.right,
-        text: TextSpan(
-            text: paragraph.indexValue.isNotEmpty ? "(${paragraph.indexValue})" : "",
-            style: DefaultTextStyle.of(context).style
+  List<Row> _constructContentRows(BuildContext context, List<Paragraph> paragraphs) {
+    List<Row> rows = [];
+    for(final paragraph in paragraphs) {
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 1,
+              child: RichText(
+                  textAlign: TextAlign.right,
+                  text: TextSpan(
+                      text: paragraph.indexValue.isNotEmpty ? "(${paragraph.indexValue})" : "",
+                      style: DefaultTextStyle.of(context).style
+                  )
+              ),
+            ),
+            Expanded(
+              flex: 19,
+              child: Column(
+                children: _formatParagraph(context, paragraph),
+              ),
+            ),
+          ],
         )
       );
-      header = Row(
+    }
+    return rows;
+  }
+
+  List<Row> _formatParagraph(BuildContext context, Paragraph paragraph) {
+    // bool isSubparagraph = paragraph.isSubparagraph;
+
+    Row headerRow = _constructHeaderRow(context, paragraph.contents);
+    List<Row> contentRows = _constructContentRows(context, paragraph.subparagraphs);
+    Row? contentRow;
+    if (contentRows.isNotEmpty) {
+      contentRow = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-              flex: 1,
-              child: index,
+            flex: 1,
+            child: Container(),
           ),
           Expanded(
-              flex: 9,
-              child: headerText
+            flex: 19,
+            child: Column(
+              children: contentRows,
+            ),
           ),
         ],
       );
     }
-
-    List<Row> rt = [header];
-    for(var subparagraph in paragraph.subparagraphs) {
-      rt.addAll(_generateRichTexts(context, subparagraph));
+    List<Row> rows = [headerRow];
+    if (contentRow != null) {
+      rows.add(contentRow);
     }
-    return rt;
+    return rows;
   }
 
-  List<Row> _getRichTextWidget(BuildContext context, RegulationUnit unit) {
+  List<Row> _getContentRows(BuildContext context, RegulationUnit unit) {
     List<Row> rt = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
       // ts.addAll(_processNodeList(context, unit.element.children));
       for (var paragraph in _process(unit.element.childElements)) {
-        rt.addAll(_generateRichTexts(context, paragraph));
+        rt.addAll(_formatParagraph(context, paragraph));
       }
     }
     return rt;
@@ -261,7 +296,7 @@ class SubChapterWidget extends StatelessWidget {
         ],
       ),
     );
-    rows.addAll(_getRichTextWidget(context, unit));
+    rows.addAll(_getContentRows(context, unit));
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(0),
