@@ -287,10 +287,12 @@ class SubChapterWidget extends StatelessWidget {
     rows.add(
       Row(
         children: [
-          RichText(
-            text: TextSpan(
-              text: '${unit.title}\n\n',
-              style: DefaultTextStyle.of(context).style,
+          Expanded(child:
+            RichText(
+              text: TextSpan(
+                text: '${unit.title}\n\n',
+                style: DefaultTextStyle.of(context).style,
+              ),
             ),
           )
         ],
