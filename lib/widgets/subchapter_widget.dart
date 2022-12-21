@@ -3,70 +3,222 @@ import 'package:flutter/material.dart';
 import '../screens/subchapters_screen.dart';
 import 'package:xml/xml.dart';
 
-class ContentProperty {
+class TextTokenStyle {
   bool isItalic;
 
-  ContentProperty([this.isItalic = false]);
-  ContentProperty.clone(ContentProperty other): this(other.isItalic);
+  TextTokenStyle([this.isItalic = false]);
+
+  TextTokenStyle.clone(TextTokenStyle other): this(other.isItalic);
+
+  factory TextTokenStyle.fromTag(String tag) {
+    bool isItalic = false;
+    if (tag == 'I') {
+      isItalic = true;
+    }
+    return TextTokenStyle(isItalic);
+  }
+
+  TextTokenStyle absorb(TextTokenStyle other) {
+    isItalic = other.isItalic;
+    return this;
+  }
+}
+
+class TextToken {
+  final String data;
+  final TextTokenStyle textTokenStyle;
+
+  const TextToken({required this.data, required this.textTokenStyle});
 }
 
 class Content {
-  final String data;
-  final ContentProperty cp;
+  final List<TextToken> textTokens;
 
-  const Content({required this.data, required this.cp});
+  const Content({this.textTokens = const []});
+
+  factory Content.fromXmlNodes(List<XmlNode> nodes) {
+    final tokens = _processChildren(nodes, TextTokenStyle());
+    return Content(textTokens: tokens);
+  }
+
+  static List<TextToken> _processChildren(List<XmlNode> nodes, TextTokenStyle style) {
+    List<TextToken> tokens = [];
+    // TODO: re-evaluate, should be safe since it is executed only for
+    // paragraphOlds and for nodes that have at least text children, but still
+    // not a good idea to rely on these constraints
+    String parentTag = nodes.first.parentElement!.name.toString();
+    final childProperty = TextTokenStyle.fromTag(parentTag);
+    final newStyle = TextTokenStyle.clone(style).absorb(childProperty);
+    for (final node in nodes) {
+      if (node.nodeType == XmlNodeType.TEXT) {
+        // leaf node, there is no more inner XML tags
+        tokens.add(TextToken(data: node.text, textTokenStyle: newStyle));
+      } else {
+        tokens.addAll(_processChildren(node.children, newStyle));
+      }
+    }
+    return tokens;
+  }
 }
 
-class ParagraphProperty {
-  int indent;
-  ParagraphProperty([this.indent = 0]);
+class EnumeratedListIdentifier {
+  final String value;
+  final bool isItalic;
+
+  bool get isEmpty {
+    return value.isEmpty && !isItalic;
+  }
+
+  const EnumeratedListIdentifier({this.value = '', this.isItalic = false});
+
+  factory EnumeratedListIdentifier.fromXmlStringStart(String content) {
+    String pattern = r'^\((?<is_italic_start>(<I>)?)(?<enumerator>\w+)(?<is_italic_end>(<\/I>)?)\)';
+    Iterable<RegExpMatch> matches = RegExp(pattern).allMatches(content);
+    if (matches.isNotEmpty) {
+      // TODO: check why the returned value is empty string instead of null
+      bool isItalic = matches.elementAt(0).namedGroup('is_italic_start')!.isNotEmpty
+          && matches.elementAt(0).namedGroup('is_italic_end')!.isNotEmpty;
+      return EnumeratedListIdentifier(
+          value: matches.elementAt(0).namedGroup('enumerator')!,
+          isItalic: isItalic,
+      );
+    }
+    return const EnumeratedListIdentifier();
+  }
+
+  @override
+  bool operator==(Object other) {
+    return other is EnumeratedListIdentifier && value == other.value && isItalic == other.isItalic;
+  }
+
+  @override
+  int get hashCode => Object.hash(value, isItalic);
+
+  @override
+  String toString() {
+    return '${value.isEmpty ? '-' : value}/${isItalic ? 'i' : '-'}';
+  }
 }
 
 class Paragraph {
-  final List<Content> contents;
-  final ParagraphProperty pp;
-  String indexValue = '';
-  bool isItalic = false;
-  bool isSubparagraph = false;
-  List<Paragraph> subparagraphs = <Paragraph>[];
+  final Content core;
+  // easier to keep it as list because there are not-enumerated paragraphs
+  // which have the same identifier which cause the collision
+  List<Paragraph> bullets;
+  final EnumeratedListIdentifier enumeratedListIdentifier;
 
-  Paragraph({required this.contents, required this.pp});
+  bool get isEnumeratedListItem {
+    return !enumeratedListIdentifier.isEmpty;
+  }
+
+  Paragraph({
+    required this.core,
+    List<Paragraph>? bullets,
+    this.enumeratedListIdentifier = const EnumeratedListIdentifier()
+  }) : bullets = bullets ?? [];
+
+  factory Paragraph.fromXml(XmlElement element) {
+    final enumeratorListIdentifier = EnumeratedListIdentifier.fromXmlStringStart(element.text);
+    final core = Content.fromXmlNodes(element.children);
+    return Paragraph(core: core, enumeratedListIdentifier: enumeratorListIdentifier);
+  }
 }
 
-class IndexDescriptor {
-  final String indexValue;
-  final bool isItalic;
-  final Paragraph paragraph;
+class NestedEnumeratedListPositionTrackerItem {
+  final Paragraph root;
+  final Paragraph node;
 
-  const IndexDescriptor({required this.indexValue, required this.isItalic, required this.paragraph});
+  const NestedEnumeratedListPositionTrackerItem({
+    required this.root, required this.node
+  });
+}
+
+class NestedEnumeratedListPositionTracker {
+
+  List<NestedEnumeratedListPositionTrackerItem> listIdentifierToRoot;
+
+  NestedEnumeratedListPositionTracker({
+    List<NestedEnumeratedListPositionTrackerItem>? listIdentifierToRoot
+  }) : listIdentifierToRoot = listIdentifierToRoot ?? [];
+
+  bool get isEmpty {
+    return listIdentifierToRoot.isEmpty;
+  }
+
+  Paragraph updateWithEnumeratedListIdentifier(
+      Paragraph newIdentifier,
+      Paragraph globalParagraph) {
+    if (!newIdentifier.isEnumeratedListItem) {
+      // when there are paragraphs within enumerated list item
+      return listIdentifierToRoot.last.node;
+    }
+
+    for(int i = listIdentifierToRoot.length - 1; i >= 0; --i) {
+      var currentIdentifier = listIdentifierToRoot[i];
+      final nextIdentifier = EnumeratedListIdentifier(
+          value: _nextIndexValue(currentIdentifier.node.enumeratedListIdentifier.value),
+          isItalic: currentIdentifier.node.enumeratedListIdentifier.isItalic);
+      if (nextIdentifier == newIdentifier.enumeratedListIdentifier) {
+        listIdentifierToRoot.removeRange(i, listIdentifierToRoot.length);
+        listIdentifierToRoot.add(NestedEnumeratedListPositionTrackerItem(root: currentIdentifier.root, node: newIdentifier));
+        return currentIdentifier.root;
+      }
+    }
+    final rootParagraph = listIdentifierToRoot.isEmpty ? globalParagraph : listIdentifierToRoot.last.node;
+    listIdentifierToRoot.add(NestedEnumeratedListPositionTrackerItem(root: rootParagraph, node: newIdentifier));
+    return rootParagraph;
+  }
+
+  static String _nextIndexValue(String indexValue) {
+    // TODO: add/implement roman numbers
+    return String.fromCharCode(indexValue.codeUnitAt(0) + 1);
+  }
+
+  @override
+  String toString() {
+    return listIdentifierToRoot.map((e) => "[${e.node.enumeratedListIdentifier} => root:${e.root.enumeratedListIdentifier}]").join(', ');
+  }
+}
+
+class Section {
+  final List<Paragraph> paragraphs;
+  const Section({required this.paragraphs});
+
+  factory Section.fromXml(Iterable<XmlElement> elements) {
+    List<Paragraph> paragraphs = [];
+    NestedEnumeratedListPositionTracker tracker = NestedEnumeratedListPositionTracker();
+
+    for(final element in _getParagraphXmlElements(elements)) {
+      var paragraph = Paragraph.fromXml(element);
+      if (!paragraph.isEnumeratedListItem && tracker.isEmpty) {
+        paragraphs.add(paragraph);
+        continue;
+      }
+
+      // if a paragraph is a part of enumerated list
+      if (paragraphs.isEmpty) {
+        paragraphs.add(Paragraph(core: const Content()));
+      }
+      var rootParagraph = tracker.updateWithEnumeratedListIdentifier(
+          paragraph, paragraphs.last);
+      rootParagraph.bullets.add(paragraph);
+    }
+
+    return Section(paragraphs: paragraphs);
+  }
+
+  static Iterable<XmlElement> _getParagraphXmlElements(Iterable<XmlElement> elements) {
+    return elements.where((element) => element.name.toString() == 'P');
+  }
 }
 
 class SubChapterWidget extends StatelessWidget {
   final RegulationUnit unit;
   const SubChapterWidget({super.key, required this.unit});
 
-  TextSpan _formatLeaf(BuildContext context, String text, XmlName name) {
+  TextSpan _formatTextContent(BuildContext context, TextToken token) {
     TextStyle style = DefaultTextStyle.of(context).style;
-    switch(name.toString()) {
-      case 'I':
-        style = TextStyle(
-          fontStyle: FontStyle.italic,
-          backgroundColor: Colors.black.withOpacity(0.2),
-        );
-        break;
-      default:
-        break;
-    }
-
-    return TextSpan(
-      text: text,
-      style: style,
-    );
-  }
-
-  TextSpan _formatContent(BuildContext context, Content content) {
-    TextStyle style = DefaultTextStyle.of(context).style;
-    if (content.cp.isItalic) {
+    if (token.textTokenStyle.isItalic) {
       style = style.merge(TextStyle(
         fontStyle: FontStyle.italic,
         backgroundColor: Colors.black.withOpacity(0.2),
@@ -74,128 +226,13 @@ class SubChapterWidget extends StatelessWidget {
     }
 
     return TextSpan(
-      text: content.data,
+      text: token.data,
       style: style,
     );
   }
 
-  List<TextSpan> _processNodeList(BuildContext context, List<XmlNode> nodes) {
-    List<TextSpan> ts = [];
-    for(var node in nodes) {
-      if (node.children.isEmpty) {
-        ts.add(TextSpan(text: 'elements|${node.childElements.toString()}|\n'));
-        ts.add(TextSpan(text: 'nodes|${node.children.toString()}|\n'));
-        ts.add(TextSpan(text: '{${node.parentElement!.name.toString()}}'));
-        ts.add(
-          _formatLeaf(context, node.text, node.parentElement!.name)
-        );
-      } else {
-        ts.addAll(_processNodeList(context, node.children));
-      }
-    }
-    return ts;
-  }
-
-  ContentProperty _buildContentProperty(String parentTag, ContentProperty cp) {
-    ContentProperty properties = ContentProperty.clone(cp);
-    if (parentTag == 'I') {
-      properties.isItalic = true;
-    }
-    return properties;
-  }
-
-  List<Content> _processChildren(List<XmlNode> nodes, ContentProperty cp) {
-    List<Content> contents = [];
-    // TODO: re-evaluate, should be safe since it is executed only for
-    // paragraphs and for nodes that have at least text children, but still
-    // not a good idea to rely on these constraints
-    String parentTag = nodes.first.parentElement!.name.toString();
-    ContentProperty mergedProperty = _buildContentProperty(parentTag, cp);
-    for (var node in nodes) {
-      if (node.nodeType == XmlNodeType.TEXT) {
-        // leaf node, there is no more inner XML tags
-        contents.add(Content(data: node.text, cp: mergedProperty));
-      } else {
-        contents.addAll(_processChildren(node.children, mergedProperty));
-      }
-    }
-    return contents;
-  }
-
-  String _nextIndexValue(String indexValue) {
-    return String.fromCharCode(indexValue.codeUnitAt(0) + 1);
-  }
-
-  List<Paragraph> _process(Iterable<XmlElement> elements) {
-    ContentProperty cp = ContentProperty();
-    List<Paragraph> paragraphs = [];
-    List<IndexDescriptor> indexDescriptors = [];
-    for(var element in elements.where((element) => element.name.toString() == 'P')) {
-      String format = r'^\((?<standard>\w+)\)|^\(<I>(?<italic>\w+)<\/I>\)';
-      RegExp exp = RegExp(format);
-      Iterable<RegExpMatch> matches = exp.allMatches(element.text);
-      Paragraph? parentParagraph = paragraphs.isNotEmpty ? paragraphs.last : null;
-
-      var content = _processChildren(element.children, cp);
-      var newParagraph = Paragraph(contents: content, pp: ParagraphProperty());
-
-      if (matches.isNotEmpty) {
-        bool currentIsItalic = matches.elementAt(0).namedGroup('italic') != null;
-        String currentIndexValue = matches.elementAt(0).namedGroup(currentIsItalic ? 'italic' : 'standard')!;
-
-        IndexDescriptor? actualIndexDescriptor;
-        // while(indexDescriptors.isNotEmpty) {
-        for(int i = indexDescriptors.length - 1; i >= 0; --i) {
-          var id = indexDescriptors[i]; //.removeLast();
-          if(_nextIndexValue(id.indexValue) == currentIndexValue
-              && id.isItalic == currentIsItalic) {
-            actualIndexDescriptor = id;
-            indexDescriptors.removeRange(i, indexDescriptors.length);
-            break;
-          }
-        }
-        // if (actualIndexDescriptor == null) {
-        //   indexDescriptors.clear();
-        // }
-
-        if (actualIndexDescriptor == null) {
-          if (parentParagraph == null) {
-            // case when there is no paragraph before list starts
-            Paragraph emptyParagraph = Paragraph(contents: <Content>[], pp: ParagraphProperty());
-            paragraphs.add(emptyParagraph);
-            parentParagraph = emptyParagraph;
-          } else {
-            parentParagraph = parentParagraph.subparagraphs.last;
-          }
-        } else {
-          parentParagraph = actualIndexDescriptor.paragraph;
-        }
-
-        indexDescriptors.add(IndexDescriptor(indexValue: currentIndexValue, isItalic: currentIsItalic, paragraph: parentParagraph));
-        newParagraph.isItalic = currentIsItalic;
-        newParagraph.indexValue = currentIndexValue;
-      }
-
-      if (parentParagraph != null) {
-        newParagraph.isSubparagraph = true;
-        parentParagraph.subparagraphs.add(newParagraph);
-      } else {
-        paragraphs.add(newParagraph);
-      }
-    }
-    return paragraphs;
-  }
-
-  Iterable<TextSpan> _format(BuildContext context, List<Paragraph> paragraphs) {
-    List<TextSpan> ts = [];
-    for (var paragraph in paragraphs) {
-      ts.addAll(paragraph.contents.map((content) => _formatContent(context, content)));
-    }
-    return ts;
-  }
-
-  Row _constructHeaderRow(BuildContext context, List<Content> contents) {
-    List<TextSpan> ts = contents.map((content) => _formatContent(context, content)).toList();
+  Row _constructHeaderRowNew(BuildContext context, List<TextToken> tokens) {
+    List<TextSpan> ts = tokens.map((token) => _formatTextContent(context, token)).toList();
     var headerText = RichText(
       text: TextSpan(
         children: ts,
@@ -210,41 +247,39 @@ class SubChapterWidget extends StatelessWidget {
     );
   }
 
-  List<Row> _constructContentRows(BuildContext context, List<Paragraph> paragraphs) {
+  List<Row> _constructContentRowsNew(BuildContext context, List<Paragraph> bullets) {
     List<Row> rows = [];
-    for(final paragraph in paragraphs) {
+    for (final paragraph in bullets) {
       rows.add(
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 1,
-              child: RichText(
-                  textAlign: TextAlign.right,
-                  text: TextSpan(
-                      text: paragraph.indexValue.isNotEmpty ? "(${paragraph.indexValue})" : "",
-                      style: DefaultTextStyle.of(context).style
-                  )
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: RichText(
+                    textAlign: TextAlign.right,
+                    text: TextSpan(
+                        text: !paragraph.enumeratedListIdentifier.isEmpty ? "(${paragraph.enumeratedListIdentifier.value})" : "",
+                        style: DefaultTextStyle.of(context).style
+                    )
+                ),
               ),
-            ),
-            Expanded(
-              flex: 19,
-              child: Column(
-                children: _formatParagraph(context, paragraph),
+              Expanded(
+                flex: 19,
+                child: Column(
+                  children: _formatParagraph(context, paragraph),
+                ),
               ),
-            ),
-          ],
-        )
+            ],
+          )
       );
     }
     return rows;
   }
 
   List<Row> _formatParagraph(BuildContext context, Paragraph paragraph) {
-    // bool isSubparagraph = paragraph.isSubparagraph;
-
-    Row headerRow = _constructHeaderRow(context, paragraph.contents);
-    List<Row> contentRows = _constructContentRows(context, paragraph.subparagraphs);
+    Row headerRow = _constructHeaderRowNew(context, paragraph.core.textTokens);
+    List<Row> contentRows = _constructContentRowsNew(context, paragraph.bullets);
     Row? contentRow;
     if (contentRows.isNotEmpty) {
       contentRow = Row(
@@ -273,8 +308,7 @@ class SubChapterWidget extends StatelessWidget {
   List<Row> _getContentRows(BuildContext context, RegulationUnit unit) {
     List<Row> rt = [];
     if (['SECTION', 'APPENDIX'].contains(unit.type)) {
-      // ts.addAll(_processNodeList(context, unit.element.children));
-      for (var paragraph in _process(unit.element.childElements)) {
+      for (var paragraph in Section.fromXml(unit.element.childElements).paragraphs) {
         rt.addAll(_formatParagraph(context, paragraph));
       }
     }
