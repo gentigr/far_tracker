@@ -285,6 +285,12 @@ class Section {
     return Section(paragraphs: paragraphs);
   }
 
+  // TODO: implement conversion from RegulationUnit
+  factory Section.fromRegulationUnit(RegulationUnit unit) {
+    List<Paragraph> paragraphs = [];
+    return Section(paragraphs: paragraphs);
+  }
+
   static Iterable<XmlElement> _getParagraphXmlElements(Iterable<XmlElement> elements) {
     return elements.where((element) => element.name.toString() == 'P');
   }
