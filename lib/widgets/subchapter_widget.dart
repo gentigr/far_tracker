@@ -100,6 +100,84 @@ class EnumeratedListIdentifier {
   }
 }
 
+class ElementUi {
+  @override
+  String toString() {
+    return '';
+  }
+}
+
+class TableUi implements ElementUi {
+  final int i;
+  final String str;
+  const TableUi(this.i, this.str);
+
+  @override
+  String toString() {
+    return '$i $str';
+  }
+}
+
+class ParagraphUi implements ElementUi {
+  final int i;
+  final String str;
+  const ParagraphUi(this.i, this.str);
+
+  @override
+  String toString() {
+    return '$i $str';
+  }
+}
+
+abstract class ContentBlock<T> {
+  final T value;
+
+  const ContentBlock(this.value);
+
+  T getValue() {
+    return value;
+  }
+}
+
+class TableBlock extends ContentBlock<int> {
+  const TableBlock(int value): super(value);
+
+  T asElement<T>(Representer v) {
+    return v.asTable<T>(this);
+  }
+}
+
+class ParagraphBlock extends ContentBlock<String> {
+  const ParagraphBlock(String value): super(value);
+
+  T asElement<T>(Representer v) {
+    return v.asParagraph<T>(this);
+  }
+}
+
+class Representer {
+  ElementUi asTable<ElementUi>(TableBlock ib) {
+    // print("invokeTable");
+    return const TableUi(1, "table") as ElementUi;
+  }
+  ElementUi asParagraph<ElementUi>(ParagraphBlock pb) {
+    // print("invokeParagraph");
+    return const ParagraphUi(2, "paragraph") as ElementUi;
+  }
+}
+
+// usage example:
+// void main() {
+//   TableBlock tb = TableBlock(100);
+//   ParagraphBlock pb = ParagraphBlock('200');
+//   Representer0 r = Representer0();
+//
+//   var t = tb.asElement<ElementUi>(r);
+//   print(t);
+//   var p = pb.asElement<ElementUi>(r);
+//   print(p);
+// }
+
 class Paragraph {
   final Content core;
   // easier to keep it as list because there are not-enumerated paragraphs
